@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"go-generate/pkg/generator"
-	"go-generate/pkg/syncmap"
+	"github.com/joesonw/go-generate/pkg/generator"
+	"github.com/joesonw/go-generate/pkg/syncmap"
 	"io/ioutil"
 	"os"
 	"os/exec"

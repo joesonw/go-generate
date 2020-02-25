@@ -2,7 +2,7 @@ package syncmap
 
 import (
 	"fmt"
-	"go-generate/pkg/generator"
+	"github.com/joesonw/go-generate/pkg/generator"
 	"go/ast"
 	"runtime"
 	"strings"
