@@ -96,7 +96,6 @@ func (g *Generator) Values() map[string]func(*ast.ValueSpec) {
 	return map[string]func(*ast.ValueSpec){}
 }
 
-// Types returns all TypesSpec handlers for AST mutation.
 func (g *Generator) Types() map[string]func(*ast.TypeSpec) {
 	return map[string]func(*ast.TypeSpec){
 		"call": func(n *ast.TypeSpec) {
@@ -121,7 +120,6 @@ func (g *Generator) Types() map[string]func(*ast.TypeSpec) {
 	}
 }
 
-// Funcs returns all FuncDecl handlers for AST mutation.
 func (g *Generator) Funcs() map[string]func(*ast.FuncDecl) {
 	return map[string]func(*ast.FuncDecl){
 		"Do": func(f *ast.FuncDecl) {

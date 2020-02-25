@@ -8,6 +8,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/joesonw/go-generate/pkg/containerheap"
+	"github.com/joesonw/go-generate/pkg/containerlist"
+	"github.com/joesonw/go-generate/pkg/containerring"
 	"github.com/joesonw/go-generate/pkg/generator"
 	"github.com/joesonw/go-generate/pkg/singleflight"
 	"github.com/joesonw/go-generate/pkg/syncmap"
@@ -43,6 +46,15 @@ func main() {
 
 	if program == "sync/map" {
 		g, err = syncmap.New(name, goPackage, expr)
+		die(err)
+	} else if program == "container/list" {
+		g, err = containerlist.New(name, goPackage, expr)
+		die(err)
+	} else if program == "container/ring" {
+		g, err = containerring.New(name, goPackage, expr)
+		die(err)
+	} else if program == "container/heap" {
+		g, err = containerheap.New(name, goPackage, expr)
 		die(err)
 	} else if program == "singleflight" {
 		g, err = singleflight.New(name, goPackage, expr, version)

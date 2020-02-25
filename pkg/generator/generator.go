@@ -65,19 +65,25 @@ func (g *Generator) Mutate() (err error) {
 		switch d := d.(type) {
 		case *ast.FuncDecl:
 			handler, ok := g.funcs[d.Name.Name]
-			Expect(ok, "unrecognized function: %s", d.Name.Name)
+			if !ok {
+				continue
+			}
 			handler(d)
 			delete(g.funcs, d.Name.Name)
 		case *ast.GenDecl:
 			switch d := d.Specs[0].(type) {
 			case *ast.TypeSpec:
 				handler, ok := g.types[d.Name.Name]
-				Expect(ok, "unrecognized type: %s", d.Name.Name)
+				if !ok {
+					continue
+				}
 				handler(d)
 				delete(g.types, d.Name.Name)
 			case *ast.ValueSpec:
 				handler, ok := g.values[d.Names[0].Name]
-				Expect(ok, "unrecognized value: %s", d.Names[0].Name)
+				if !ok {
+					continue
+				}
 				handler(d)
 				Expect(len(d.Names) == 1, "mismatch values length: %d", len(d.Names))
 				delete(g.values, d.Names[0].Name)
@@ -86,9 +92,9 @@ func (g *Generator) Mutate() (err error) {
 			Expect(false, "unrecognized type: %s", d)
 		}
 	}
-	Expect(len(g.funcs) == 0, "function was deleted")
-	Expect(len(g.types) == 0, "type was deleted")
-	Expect(len(g.values) == 0, "value was deleted")
+	//Expect(len(g.funcs) == 0, "function was deleted")
+	//Expect(len(g.types) == 0, "type was deleted")
+	//Expect(len(g.values) == 0, "value was deleted")
 	g.file = f
 	return g.impl.Mutate()
 }

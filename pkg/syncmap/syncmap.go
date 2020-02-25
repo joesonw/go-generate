@@ -47,7 +47,6 @@ func (g *Generator) Values() map[string]func(*ast.ValueSpec) {
 	}
 }
 
-// Types returns all TypesSpec handlers for AST mutation.
 func (g *Generator) Types() map[string]func(*ast.TypeSpec) {
 	return map[string]func(*ast.TypeSpec){
 		"Map": func(t *ast.TypeSpec) {
@@ -56,13 +55,10 @@ func (g *Generator) Types() map[string]func(*ast.TypeSpec) {
 			g.replaceKey(t.Type)
 		},
 		"readOnly": func(t *ast.TypeSpec) { g.replaceKey(t) },
-		"entry":    func(*ast.TypeSpec) {},
 	}
 }
 
-// Funcs returns all FuncDecl handlers for AST mutation.
 func (g *Generator) Funcs() map[string]func(*ast.FuncDecl) {
-	nop := func(*ast.FuncDecl) {}
 	return map[string]func(*ast.FuncDecl){
 		"Load": func(f *ast.FuncDecl) {
 			g.replaceKey(f.Type.Params)
@@ -87,22 +83,16 @@ func (g *Generator) Funcs() map[string]func(*ast.FuncDecl) {
 		"Range": func(f *ast.FuncDecl) {
 			g.renameTuple(f.Type.Params.List[0].Type.(*ast.FuncType).Params)
 		},
-		"Delete":           func(f *ast.FuncDecl) { g.replaceKey(f) },
-		"newEntry":         func(f *ast.FuncDecl) { g.replaceValue(f) },
-		"tryStore":         func(f *ast.FuncDecl) { g.replaceValue(f) },
-		"dirtyLocked":      func(f *ast.FuncDecl) { g.replaceKey(f) },
-		"storeLocked":      func(f *ast.FuncDecl) { g.replaceValue(f) },
-		"delete":           nop,
-		"missLocked":       nop,
-		"unexpungeLocked":  nop,
-		"tryExpungeLocked": nop,
+		"Delete":      func(f *ast.FuncDecl) { g.replaceKey(f) },
+		"newEntry":    func(f *ast.FuncDecl) { g.replaceValue(f) },
+		"tryStore":    func(f *ast.FuncDecl) { g.replaceValue(f) },
+		"dirtyLocked": func(f *ast.FuncDecl) { g.replaceKey(f) },
+		"storeLocked": func(f *ast.FuncDecl) { g.replaceValue(f) },
 	}
 }
 
-// ReplaceKey replaces all `interface{}` occurrences in the given Node with the key node.
 func (g *Generator) replaceKey(n ast.Node) { generator.ReplaceIface(n, g.key) }
 
-// ReplaceValue replaces all `interface{}` occurrences in the given Node with the value node.
 func (g *Generator) replaceValue(n ast.Node) { generator.ReplaceIface(n, g.value) }
 
 func (g *Generator) renameTuple(l *ast.FieldList) {
