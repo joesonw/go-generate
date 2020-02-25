@@ -6,9 +6,10 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
-	"golang.org/x/tools/go/ast/astutil"
 	"os"
 	"reflect"
+
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 func ReplaceIface(n ast.Node, s string) {
@@ -20,21 +21,6 @@ func ReplaceIface(n ast.Node, s string) {
 		return true
 	}, nil)
 }
-
-func (g *Generator) RenameTuple(l *ast.FieldList) {
-	if g.key == g.value {
-		g.ReplaceKey(l.List[0])
-		return
-	}
-	l.List = append(l.List, &ast.Field{
-		Names: []*ast.Ident{l.List[0].Names[1]},
-		Type:  l.List[0].Type,
-	})
-	l.List[0].Names = l.List[0].Names[:1]
-	g.ReplaceKey(l.List[0])
-	g.ReplaceValue(l.List[1])
-}
-
 
 func RenameNil(n ast.Node, name string) {
 	astutil.Apply(n, func(c *astutil.Cursor) bool {
@@ -121,7 +107,6 @@ func SetPos(n ast.Node, p token.Pos) {
 	}
 }
 
-
 // Check panics if the error is not nil.
 func Check(err error, msg string, args ...interface{}) {
 	if err != nil {
@@ -141,7 +126,7 @@ type genError struct {
 	msg string
 }
 
-func (p genError) Error() string { return fmt.Sprintf("go-generate sync/map: %s", p.msg) }
+func (p genError) Error() string { return fmt.Sprintf("go-generate: %s", p.msg) }
 
 func Catch(err *error) {
 	if e := recover(); e != nil {

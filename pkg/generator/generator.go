@@ -6,62 +6,52 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"golang.org/x/tools/go/ast/astutil"
+	"io"
 	"io/ioutil"
+
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 // Generator generates the typed syncmap object.
 type Generator struct {
 	// flag options.
-	pkg   string // package name.
+	pkg    string // package name.
 	source string // source file needed to be mutated
-	key   string // map key type.
-	value string // map value type.
-	// mutation state and traversal handlers.
-	file   *ast.File
-	fset   *token.FileSet
 
+	// mutation state and traversal handlers.
+	file *ast.File
+	fset *token.FileSet
+
+	impl   Implementation
 	funcs  map[string]func(*ast.FuncDecl)
 	types  map[string]func(*ast.TypeSpec)
 	values map[string]func(*ast.ValueSpec)
-	names map[string]string
 }
 
 type Implementation interface {
 	Values() map[string]func(*ast.ValueSpec)
 	Types() map[string]func(*ast.TypeSpec)
 	Funcs() map[string]func(*ast.FuncDecl)
-	Names() map[string]string
+	Mutate() error
 }
 
-// NewGenerator returns a new generator for syncmap.
-func New(pkg, source, typ string, impl Implementation) (g *Generator, err error) {
+// NewGenerator returns a new generator.
+func New(pkg, source string, impl Implementation) (g *Generator, err error) {
 	defer Catch(&err)
 	g = &Generator{
-		fset: token.NewFileSet(),
-		pkg: pkg,
-		source:source,
+		fset:   token.NewFileSet(),
+		pkg:    pkg,
+		impl:   impl,
+		source: source,
 	}
 	g.funcs = impl.Funcs()
 	g.types = impl.Types()
 	g.values = impl.Values()
-	g.names = impl.Names()
-	exp, err := parser.ParseExpr(typ)
-	Check(err, "parse expr: %s", typ)
-	m, ok := exp.(*ast.MapType)
-	Expect(ok, "invalid argument. expected map[T1]T2")
-	b := bytes.NewBuffer(nil)
-	err = format.Node(b, g.fset, m.Key)
-	Check(err, "format map key")
-	g.key = b.String()
-	b.Reset()
-	err = format.Node(b, g.fset, m.Value)
-	Check(err, "format map value")
-	g.value = b.String()
+
 	return
 }
 
-// Mutate mutates the original `sync/map` AST and brings it to the desired state.
+// Mutate mutates the original AST and brings it to the desired state.
 // It fails if it encounters an unrecognized node in the AST.
 func (g *Generator) Mutate() (err error) {
 	defer Catch(&err)
@@ -71,7 +61,6 @@ func (g *Generator) Mutate() (err error) {
 	f, err := parser.ParseFile(g.fset, "", b, parser.ParseComments)
 	Check(err, "parse %q file", path)
 	f.Name.Name = g.pkg
-	astutil.AddImport(g.fset, f, "sync")
 	for _, d := range f.Decls {
 		switch d := d.(type) {
 		case *ast.FuncDecl:
@@ -100,9 +89,8 @@ func (g *Generator) Mutate() (err error) {
 	Expect(len(g.funcs) == 0, "function was deleted")
 	Expect(len(g.types) == 0, "type was deleted")
 	Expect(len(g.values) == 0, "value was deleted")
-	Rename(f, g.names)
 	g.file = f
-	return
+	return g.impl.Mutate()
 }
 
 // Gen dumps the mutated AST to a file in the configured destination.
@@ -114,8 +102,14 @@ func (g *Generator) Generate() (out []byte, err error) {
 	return b.Bytes(), err
 }
 
-// ReplaceKey replaces all `interface{}` occurrences in the given Node with the key node.
-func (g *Generator) ReplaceKey(n ast.Node) { ReplaceIface(n, g.key) }
+func (g *Generator) FormatNode(dst io.Writer, node interface{}) error {
+	return format.Node(dst, g.fset, node)
+}
 
-// ReplaceValue replaces all `interface{}` occurrences in the given Node with the value node.
-func (g *Generator) ReplaceValue(n ast.Node) { ReplaceIface(n, g.value) }
+func (g *Generator) Rename(names map[string]string) {
+	Rename(g.file, names)
+}
+
+func (g *Generator) AddImport(path string) {
+	astutil.AddImport(g.fset, g.file, path)
+}

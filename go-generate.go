@@ -2,19 +2,22 @@ package main
 
 import (
 	"flag"
-	"github.com/joesonw/go-generate/pkg/generator"
-	"github.com/joesonw/go-generate/pkg/syncmap"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
+
+	"github.com/joesonw/go-generate/pkg/generator"
+	"github.com/joesonw/go-generate/pkg/singleflight"
+	"github.com/joesonw/go-generate/pkg/syncmap"
 )
 
 var (
-	pOut = flag.String("out", "", "")
-	pName = flag.String("name", "", "")
-	pGenerator = flag.String("generator", "","")
+	pOut       = flag.String("out", "", "")
+	pName      = flag.String("name", "", "")
+	pGenerator = flag.String("generator", "", "")
+	pVersion   = flag.String("version", "", "")
 )
 
 func main() {
@@ -25,6 +28,7 @@ func main() {
 	flag.Parse()
 	name := strings.TrimSpace(*pName)
 	program := strings.TrimSpace(*pGenerator)
+	version := strings.TrimSpace(*pVersion)
 
 	out := strings.TrimSpace(*pOut)
 	if out == "" {
@@ -33,12 +37,15 @@ func main() {
 
 	cwd, err := os.Getwd()
 	die(err)
-	out = path.Join(cwd,out)
+	out = path.Join(cwd, out)
 
-	expr := os.Args[len(os.Args) - 1]
+	expr := os.Args[len(os.Args)-1]
 
 	if program == "sync/map" {
 		g, err = syncmap.New(name, goPackage, expr)
+		die(err)
+	} else if program == "singleflight" {
+		g, err = singleflight.New(name, goPackage, expr, version)
 		die(err)
 	} else {
 		panic(program + " does not exist")
