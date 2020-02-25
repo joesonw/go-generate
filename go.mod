@@ -1,4 +1,4 @@
-module github.com/joesonw/go-generate
+module github.com/joesonw/gogenerator
 
 go 1.13
 
