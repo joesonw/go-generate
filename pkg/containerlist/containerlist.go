@@ -65,6 +65,7 @@ func (g *Generator) Mutate() error {
 	g.Rename(map[string]string{
 		"Element": strings.Title(g.name) + "Element",
 		"List":    strings.Title(g.name) + "List",
+		"New":     "New" + strings.Title(g.name),
 	})
 	return nil
 }
